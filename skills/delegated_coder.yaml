@@ -1,0 +1,9 @@
+name: delegated_coder
+description: "Delegates coding tasks to isolated worker backed by DeepSeek."
+parameters:
+  type: object
+  properties:
+    instruction:
+      type: string
+  required:
+    - instruction

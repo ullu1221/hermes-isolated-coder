@@ -1,0 +1,8 @@
+services:
+  hermes-isolated:
+    build: .
+    volumes:
+      - ./:/workspace
+    env_file:
+      - .env
+    working_dir: /workspace

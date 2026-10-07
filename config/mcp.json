@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "code-graph": {
+      "command": "npx",
+      "args": ["code-review-graph", "mcp", "--db", ".crg/graph.db"]
+    },
+    "git-checkpoint": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "."]
+    }
+  }
+}

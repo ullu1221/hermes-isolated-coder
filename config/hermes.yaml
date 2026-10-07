@@ -1,0 +1,8 @@
+agent:
+  name: "Hermes-Architect"
+context_pruning:
+  engine: "smart-truncation"
+  rules:
+    max_tokens_per_tool_output: 800
+    prune_tool_history_turns: 2
+    always_preserve_diffs: true
