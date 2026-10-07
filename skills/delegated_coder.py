@@ -110,7 +110,7 @@ def execute(instruction, target_dir="."):
     checkpoint_id = secrets.token_hex(3)
     branch_name = f"hermes/patch-{checkpoint_id}"
     try:
-        subprocess.run(["git", "checkout", "master"], cwd=workspace, check=True, capture_output=True)
+        subprocess.run(["git", "checkout", "main"], cwd=workspace, check=True, capture_output=True)
         subprocess.run(["git", "checkout", "-b", branch_name], cwd=workspace, check=True, capture_output=True)
     except subprocess.CalledProcessError as e:
         return json.dumps({"status": "FAILED", "reason": f"Git checkout failed: {e.stderr.decode()}"})
@@ -201,7 +201,7 @@ def execute(instruction, target_dir="."):
         }, indent=2)
 
     except Exception as ex:
-        subprocess.run(["git", "checkout", "master"], cwd=workspace, capture_output=True)
+        subprocess.run(["git", "checkout", "main"], cwd=workspace, capture_output=True)
         return json.dumps({
             "status": "ERROR",
             "details": str(ex)
