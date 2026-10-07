@@ -37,6 +37,12 @@ def parse_bytes(text: str) -> int:
 
     Raises:
         ValueError: If the format is invalid.
+
+    Examples:
+        >>> parse_bytes("2 GB")
+        2147483648
+        >>> parse_bytes("500 KB")
+        512000
     """
     # Remove any whitespace and convert to uppercase for case-insensitive matching
     text = text.strip().upper()
