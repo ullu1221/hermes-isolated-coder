@@ -2,19 +2,17 @@
 set -eo pipefail
 cd "$(dirname "$0")"
 
-if [ ! -f .env ] && [ -f .env.example ]; then
-  cp .env.example .env
-fi
+[ -f .env ] && set -a && source .env && set +a
 
-if [ ! -d ".venv" ] && [ ! -f "/.dockerenv" ]; then
-  echo "==> Bootstrapping local virtualenv and npm dependencies..."
+if [ ! -d ".venv" ]; then
+  echo "==> Bootstrapping virtualenv and dependencies..."
   python3 -m venv .venv
   source .venv/bin/activate
   pip install -q -r requirements.txt
-  npm install --silent
+  echo "==> Virtualenv ready."
 fi
 
-[ -f ".venv/bin/activate" ] && source .venv/bin/activate
+source .venv/bin/activate
 
 TASK="${1:-}"
 if [ -z "$TASK" ]; then
