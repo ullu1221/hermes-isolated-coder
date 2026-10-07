@@ -189,7 +189,7 @@ def execute(instruction, target_dir="."):
         # 3. Stage changes to capture new and modified files
         subprocess.run(["git", "add", "-A"], cwd=workspace, capture_output=True)
         subprocess.run(["git", "commit", "-m", f"agent: {instruction[:60]}"], cwd=workspace, capture_output=True)
-        diff_res = subprocess.run(["git", "diff", "--staged", "HEAD"], cwd=workspace, capture_output=True, text=True)
+        diff_res = subprocess.run(["git", "diff", "master..HEAD"], cwd=workspace, capture_output=True, text=True)
         diff_text = diff_res.stdout if diff_res.stdout else "No file changes detected."
 
         return json.dumps({
