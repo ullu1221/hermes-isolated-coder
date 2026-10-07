@@ -88,8 +88,6 @@ TOOLS = [
 ]
 
 def auto_save_markdown_blocks(text, workspace="."):
-    """Fallback: If model returned code in markdown without calling write_file, extract and save it."""
-    # Matches patterns like: `utils.py` or **test_utils.py** followed by ```python ... ```
     pattern = r"(?:`|\*\*|\#\s*)([a-zA-Z0-9_\-\.\/]+\.[a-zA-Z0-9]+)(?:`|\*\*|\n)?[\s\S]*?```(?:[a-zA-Z0-9_\-]+)?\n([\s\S]*?)```"
     matches = re.findall(pattern, text)
     saved = []
@@ -108,7 +106,7 @@ def execute(instruction, target_dir="."):
     if not api_key:
         return json.dumps({"status": "FAILED", "reason": "OPENAI_API_KEY not set in .env"})
 
-    # 1. Create clean Git checkpoint branched from master
+    # 1. Clean Git checkpoint branched from master
     checkpoint_id = secrets.token_hex(3)
     branch_name = f"hermes/patch-{checkpoint_id}"
     try:
@@ -117,15 +115,15 @@ def execute(instruction, target_dir="."):
     except subprocess.CalledProcessError as e:
         return json.dumps({"status": "FAILED", "reason": f"Git checkout failed: {e.stderr.decode()}"})
 
-    # 2. Workspace structure
+    # 2. Preload workspace structure
     file_tree = get_workspace_tree(workspace)
     system_prompt = (
-        "You are an autonomous software engineer working directly in a git repository.\n"
+        "You are an autonomous senior software engineer working in a git repository.\n"
         "Files in workspace:\n" + "\n".join(f"- {f}" for f in file_tree) + "\n\n"
         "CRITICAL INSTRUCTIONS:\n"
-        "1. Whenever asked to create or modify code, you MUST invoke the 'write_file' tool.\n"
-        "2. Do NOT merely describe or output code in chat. You must call 'write_file' to write it to disk.\n"
-        "3. Use 'run_shell' to run tests and verify your changes before finishing."
+        "1. Whenever creating or modifying files, you MUST invoke 'write_file'.\n"
+        "2. To inspect code, use 'read_file'.\n"
+        "3. Always run tests using 'run_shell' before finishing."
     )
 
     client = OpenAI(
@@ -141,8 +139,10 @@ def execute(instruction, target_dir="."):
     ]
 
     try:
+        final_reply = ""
         tools_invoked = False
-        for _ in range(6):
+
+        for _ in range(8):
             response = client.chat.completions.create(
                 model=model,
                 messages=messages,
@@ -154,6 +154,7 @@ def execute(instruction, target_dir="."):
             messages.append(msg)
 
             if not msg.tool_calls:
+                final_reply = msg.content or "(Task finished)"
                 break
 
             tools_invoked = True
@@ -176,13 +177,16 @@ def execute(instruction, target_dir="."):
                     "content": str(result)
                 })
 
-        final_reply = messages[-1].content or "(Actions completed)"
+        # Safe extraction if loop ended on a tool turn
+        if not final_reply:
+            last = messages[-1]
+            final_reply = last.get("content") if isinstance(last, dict) else getattr(last, "content", "(Task finished)")
 
-        # Safety Fallback: if the model only chatted and omitted tool calls, extract code blocks
+        # Fallback for models outputting raw markdown code blocks
         if not tools_invoked and ("```" in final_reply):
             auto_save_markdown_blocks(final_reply, workspace)
 
-        # 3. Stage changes so brand new/untracked files appear in git diff
+        # 3. Stage changes to capture new and modified files
         subprocess.run(["git", "add", "-A"], cwd=workspace, capture_output=True)
         diff_res = subprocess.run(["git", "diff", "--staged", "HEAD"], cwd=workspace, capture_output=True, text=True)
         diff_text = diff_res.stdout if diff_res.stdout else "No file changes detected."
@@ -192,7 +196,7 @@ def execute(instruction, target_dir="."):
             "model": model,
             "branch": branch_name,
             "response": final_reply,
-            "git_diff_preview": diff_text[:2000]
+            "git_diff_preview": diff_text[:2500]
         }, indent=2)
 
     except Exception as ex:
