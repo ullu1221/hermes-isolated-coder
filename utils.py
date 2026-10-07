@@ -2,18 +2,18 @@
 
 
 def format_bytes(size: int) -> str:
-    """Convert raw bytes to a human-readable string (KB, MB, GB).
+    """Convert raw bytes to a human-readable string (KB, MB, GB, TB, PB).
 
     Args:
         size: Size in bytes.
 
     Returns:
-        Human-readable string like "1.00 KB", "2.50 MB", "1.00 GB".
+        Human-readable string like "1.00 KB", "2.50 MB", "1.00 GB", "1.00 TB", "1.00 PB".
     """
     if size < 0:
         raise ValueError("size must be non-negative")
 
-    units = ["B", "KB", "MB", "GB"]
+    units = ["B", "KB", "MB", "GB", "TB", "PB"]
     unit_index = 0
     size_float = float(size)
 
